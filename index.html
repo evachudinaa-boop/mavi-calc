@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mavi Studio — калькулятор</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2a1b17;--blue:#2f4ba0;--sky:#5aa9db;--peach:#fcd5ba;--cream:#fff6ec;--card:#ffffffd9}
+*{box-sizing:border-box;margin:0}
+body{font:16px/1.4 'Inter Tight',Helvetica,Arial,sans-serif;color:var(--ink);min-height:100vh;padding:20px 16px 130px;
+background:radial-gradient(70% 40% at 0% 0%,var(--blue),transparent),radial-gradient(60% 40% at 100% 100%,var(--sky),transparent),radial-gradient(60% 50% at 100% 20%,var(--peach),transparent),var(--cream);background-attachment:fixed}
+h1{font-size:clamp(44px,15vw,72px);font-weight:800;letter-spacing:-.04em;line-height:.9}
+h2{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+.sub{margin:10px 0 24px;max-width:30ch}
+.hide{display:none!important}
+.mode{display:block;width:100%;text-align:left;border:0;border-radius:28px;padding:22px;margin-bottom:12px;font:inherit;color:inherit;cursor:pointer}
+.mode b{display:block;font-size:26px;font-weight:800;letter-spacing:-.03em}
+.mode.a{background:var(--blue);color:#fff}.mode.b{background:var(--peach);border-radius:28px 28px 28px 6px}
+.card{background:var(--card);backdrop-filter:blur(8px);border-radius:20px;padding:16px;margin-bottom:12px}
+label{display:block;font-size:14px;margin:10px 0 4px;opacity:.75}
+input,select,textarea{width:100%;font:inherit;color:inherit;padding:11px 12px;border:1.5px solid #2a1b1722;border-radius:12px;background:#fff}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.chk{display:flex;gap:10px;align-items:center;margin:8px 0;opacity:1;font-size:16px}
+.chk input{width:22px;height:22px;flex:none;accent-color:var(--blue)}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;display:flex;align-items:center;gap:12px;border-radius:24px 24px 0 0}
+.bar .t{flex:1}.bar small{opacity:.7;display:block;font-size:13px}.bar strong{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.btn{border:0;border-radius:16px;padding:14px 20px;font:inherit;font-weight:800;background:var(--peach);color:var(--ink);cursor:pointer}
+.back{background:none;border:0;font:inherit;color:var(--ink);opacity:.7;padding:0 0 12px;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:15px}td{padding:8px 0;border-bottom:1px solid #2a1b171a;vertical-align:top}td:last-child{text-align:right;white-space:nowrap;padding-left:10px}
+.kp h2{font-size:26px}.meta{font-size:13px;opacity:.7;margin-bottom:12px}.tot td{font-weight:800;font-size:18px;border:0}
+.oth{margin-top:8px}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.chip{border:2px solid var(--ink);background:transparent;border-radius:999px;padding:10px 16px;font:inherit;font-weight:800;color:var(--ink);cursor:pointer}.chip[aria-pressed=true]{background:var(--ink);color:#fff}
+ul{padding-left:18px;font-size:14px}
+</style></head><body>
+
+<section id="s-mode">
+<h1>MAVI<br>STUDIO</h1>
+<p class="sub">Рассчитайте стоимость за минуту. Точную цену назовём после обсуждения.</p>
+<button class="mode a" data-m="p"><b>Для себя или в подарок</b>Подарки, вещи для дома, любая ваша идея</button>
+<button class="mode b" data-m="b"><b>Для бизнеса</b>Мерч, оформление, фирменный стиль. Получите коммерческое предложение</button>
+</section>
+
+<section id="s-calc" class="hide">
+<button class="back" data-go="s-mode">← Назад</button>
+<h2 id="ct"></h2>
+<p class="sub" style="margin-top:0">Выберите, что нужно: одно или всё сразу.</p>
+<div class="chips" id="chips"></div>
+<div class="card hide" id="c-print"><b>3D-печать</b>
+<label>Материал</label><select id="mat"></select>
+<label>Размер изделия</label>
+<div class="row"><input id="sl" type="number" min="0" inputmode="decimal" placeholder="Длина"><input id="sw" type="number" min="0" inputmode="decimal" placeholder="Ширина"><input id="sh" type="number" min="0" inputmode="decimal" placeholder="Высота"><select id="unit" style="flex:.8"><option>см</option><option>мм</option></select></div>
+<label>Форма</label><select id="shape"></select>
+<label>Количество, шт.</label><input id="q" type="number" min="1" value="1" inputmode="numeric">
+<label class="chk"><input id="paint" type="checkbox">Покраска и постобработка</label>
+<small>Точных размеров нет? Укажите примерные или опишите идею в комментарии.</small></div>
+<div class="card hide" id="c-model"><b>Дизайн</b><label>Сложность</label><select id="mod"></select></div>
+<div class="card hide" id="c-poly"><b>Полиграфия (дизайн макета)</b><div id="poly"></div><small>Печать тиража считаем отдельно после выбора формата и тиража.</small></div>
+<div class="card hide" id="c-brand"><b>Брендинг</b><label>Пакет</label><select id="brand"></select></div>
+<div class="card hide" id="c-other"><b>Другое</b><label>Опишите, что вам нужно</label><textarea id="o-other" rows="3"></textarea></div>
+<div class="card"><label class="chk"><input id="rush" type="checkbox">Срочно (+30%)</label></div>
+<div class="card"><b>Скидки</b>
+<label class="chk"><input id="first" type="checkbox"><span id="lf"></span></label>
+<label class="chk"><input id="ref" type="checkbox"><span id="lr"></span></label>
+<input id="o-ref" class="oth hide" placeholder="Кто посоветовал? Имя или @ник"></div>
+<div class="bar"><div class="t"><small>Ориентировочно</small><strong id="tot">0 ₽</strong></div><button class="btn" id="go"></button></div>
+</section>
+
+<section id="s-order" class="hide">
+<button class="back" data-go="s-calc">← Изменить расчёт</button>
+<div class="card kp"><h2 id="ot"></h2><div class="meta" id="om"></div><table id="ol"></table>
+<ul id="oterms"></ul></div>
+<div class="card">
+<label>Как к вам обращаться</label><input id="n">
+<label class="biz">Компания или проект</label><input id="co" class="biz">
+<label>Контакт (Telegram, телефон или почта)</label><input id="ct2">
+<label>Что важно знать? Сроки, референсы, идеи</label><textarea id="cm" rows="3"></textarea></div>
+<button class="btn" id="send" style="width:100%">Отправить заявку</button>
+</section>
+
+<section id="s-done" class="hide"><h2>Заявка собрана</h2><p>Вне Telegram она не отправляется. Так будет выглядеть сообщение для студии:</p><pre id="dump" style="white-space:pre-wrap;font-size:13px;margin-top:10px"></pre></section>
+
+<script>
+/* ===== ЦЕНЫ: меняйте только здесь (₽) ===== */
+const P={
+ mat:{"PLA":[1.24,15],"PETG / ABS":[1.27,18],"TPU (гибкий)":[1.21,25]}, // [плотность г/см³, ₽ за грамм — клиент не видит]
+ shape:{"Объёмная (фигурка, ваза)":.25,"Полая или ажурная (рамка, органайзер)":.12,"Плоская (брелок, магнит, табличка)":.5}, // доля объёма, занятая пластиком
+ minPrint:500,first:.10,ref:.05, // скидки: первый заказ, по рекомендации
+ paint:.4,rush:.3,
+ disc:[[30,.15],[10,.10]],          // от N шт. — скидка
+ model:{"Простой — от 1 000 ₽":1000,"Средний — от 2 500 ₽":2500,"Сложный — от 5 000 ₽":5000},
+ poly:{p:{"Открытка":1500,"Стикеры":2000,"Бирки или упаковка":2000,"Плакат":2000},b:{"Визитки":1500,"Листовка":1500,"Бирки":2000,"Стикеры":2000,"Карточки":2000,"Плакат":2000}},
+ brand:{"Логотип — 8 000 ₽":8000,"Мини-фирстиль — от 10 000 ₽":10000,"Брендбук — от 20 000 ₽":20000},
+ upTo:1.3,printSpread:.25,validDays:7,prepay:50,edits:2
+};
+/* ========================================== */
+const tg=window.Telegram?.WebApp;if(tg){tg.ready();tg.expand()}
+const $=id=>document.getElementById(id),fmt=n=>Math.round(n/100)*100,rub=n=>fmt(n).toLocaleString('ru-RU')+' ₽';
+const fill=(el,o)=>el.innerHTML=Object.keys(o).map(k=>`<option>${k}</option>`).join('');
+fill($('mat'),P.mat);fill($('shape'),P.shape);fill($('mod'),P.model);fill($('brand'),P.brand);
+['mat','shape','mod','brand'].forEach(id=>{$(id).insertAdjacentHTML('beforeend','<option>Другое</option>');$(id).insertAdjacentHTML('afterend',`<input id="o-${id}" class="oth hide" placeholder="Напишите своё">`)});
+const SV={p:[['print','3D-печать'],['model','Дизайн'],['poly','Полиграфия'],['other','Другое']],b:[['print','3D-печать'],['model','Дизайн'],['poly','Полиграфия'],['brand','Брендинг'],['other','Другое']]};
+$('lf').textContent=`Это мой первый заказ (−${P.first*100}%)`;$('lr').textContent=`Мне вас посоветовали (−${P.ref*100}%)`;
+let mode='p',on=new Set(),calc={lines:[],lo:0,hi:0};
+const show=id=>{document.querySelectorAll('section').forEach(s=>s.classList.toggle('hide',s.id!==id));scrollTo(0,0)};
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;on.clear();
+ ['print','model','poly','brand','other'].forEach(i=>$('c-'+i).classList.add('hide'));
+ document.querySelectorAll('.biz').forEach(e=>e.classList.toggle('hide',mode==='p'));
+ $('chips').innerHTML=SV[mode].map(([i,n])=>`<button class="chip" aria-pressed="false" data-s="${i}">${n}</button>`).join('');
+ $('poly').innerHTML=Object.keys(P.poly[mode]).map(k=>`<label class="chk"><input type="checkbox" value="${k}">${k}</label>`).join('')+'<label class="chk"><input type="checkbox" value="Другое">Другое</label><input id="o-poly" class="oth hide" placeholder="Что нужно сделать?">';
+ $('ct').textContent=mode==='p'?'Что вам нужно?':'Что нужно проекту?';
+ $('go').textContent=mode==='p'?'Заказать':'Получить КП';update();show('s-calc')});
+$('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const i=b.dataset.s,x=!on.has(i);
+ x?on.add(i):on.delete(i);b.setAttribute('aria-pressed',x);$('c-'+i).classList.toggle('hide',!x);update()};
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+function update(){
+ const L=[],q=Math.max(1,+$('q').value||1),add=(n,p)=>L.push({n,lo:p,hi:p*P.upTo}),tbd=n=>L.push({n,lo:0,hi:0,tbd:1}),v=id=>$(id).value==='Другое'?'Другое: '+($('o-'+id).value||'уточним'):$(id).value;
+ ['mat','shape','mod','brand'].forEach(id=>$('o-'+id).classList.toggle('hide',$(id).value!=='Другое'));
+ $('o-poly').classList.toggle('hide',!document.querySelector('#poly input[value="Другое"]').checked);
+ if(on.has('print')){const d3=[$('sl'),$('sw'),$('sh')].map(e=>+e.value||0),u=$('unit').value,k=u==='мм'?.1:1;
+  if(d3.every(v=>v>0)){const [den,rate]=P.mat[$('mat').value]||P.mat.PLA;
+   let b=d3[0]*d3[1]*d3[2]*k**3*(P.shape[$('shape').value]??.2)*den*rate*q;b=Math.max(b,P.minPrint);
+   if($('paint').checked)b*=1+P.paint;
+   const dc=(P.disc.find(x=>q>=x[0])||[0,0])[1];b*=1-dc;
+   L.push({n:`3D-печать ${d3.join('×')} ${u}, ${v('mat')}, ${q} шт.`+($('paint').checked?', покраска':'')+(dc?`, скидка ${dc*100}%`:''),lo:b*(1-P.printSpread),hi:b*(1+P.printSpread)})}}
+ if(on.has('model')){const m=$('mod').value;m==='Другое'?tbd('Дизайн: '+($('o-mod').value||'уточним')):add('Дизайн: '+m.split(' —')[0],P.model[m])}
+ if(on.has('poly'))document.querySelectorAll('#poly input:checked').forEach(c=>c.value==='Другое'?tbd('Макет: '+($('o-poly').value||'уточним')):add('Макет: '+c.value,P.poly[mode][c.value]));
+ if(on.has('brand')){const b=$('brand').value;b==='Другое'?tbd('Брендинг: '+($('o-brand').value||'уточним')):add('Брендинг: '+b.split(' —')[0],P.brand[b])}
+ if(on.has('other'))tbd('Другое: '+($('o-other').value||'уточним'));
+ let lo=L.reduce((a,x)=>a+x.lo,0),hi=L.reduce((a,x)=>a+x.hi,0);
+ if($('rush').checked&&lo){L.push({n:'Срочность +30%',lo:lo*P.rush,hi:hi*P.rush});lo*=1+P.rush;hi*=1+P.rush}
+ $('o-ref').classList.toggle('hide',!$('ref').checked);
+ const f=$('first').checked,r=$('ref').checked,dp=(f?P.first:0)+(r?P.ref:0);
+ if(dp&&lo){L.push({n:'Скидка: '+[f&&'первый заказ',r&&'совет знакомого'].filter(Boolean).join(' + ')+` −${Math.round(dp*100)}%`,lo:-lo*dp,hi:-hi*dp});lo*=1-dp;hi*=1-dp}
+ calc={lines:L,lo,hi};
+ $('tot').textContent=lo?(fmt(lo)===fmt(hi)?rub(lo):`${rub(lo).replace(' ₽','')} – ${rub(hi)}`):(L.length?'уточним':'0 ₽');
+}
+$('s-calc').addEventListener('input',update);
+const range=x=>x.tbd?'уточним':fmt(x.lo)===fmt(x.hi)?rub(x.lo):`${rub(x.lo).replace(' ₽','')} – ${rub(x.hi)}`;
+$('go').onclick=()=>{if(!on.size){alert('Выберите, что вам нужно');return}
+ if(!calc.lines.length){alert('Заполните параметры выбранных услуг: для печати нужны размеры, для полиграфии отметьте макеты');return}
+ const d=new Date(),ds=d.toLocaleDateString('ru-RU'),no='MD-'+d.toISOString().slice(2,10).replace(/-/g,'');
+ $('ot').textContent=mode==='p'?'Ваш заказ':'Коммерческое предложение';
+ $('om').textContent=mode==='p'?`Расчёт от ${ds}`:`№ ${no} от ${ds}. Действует ${P.validDays} дней`;
+ $('ol').innerHTML=calc.lines.map(x=>`<tr><td>${x.n}</td><td>${range(x)}</td></tr>`).join('')+`<tr class="tot"><td>Итого</td><td>${calc.lo?range(calc):'уточним'}</td></tr>`;
+ $('oterms').innerHTML=(calc.lines.some(x=>x.n.startsWith('Скидка'))?'<li>Скидки подтверждаем при согласовании заказа</li>':'')+(calc.lines.some(x=>x.tbd)?'<li>Позиции «уточним» рассчитаем после обсуждения</li>':'')+`<li>Точную цену фиксируем после обсуждения задачи</li><li>Предоплата ${P.prepay}%</li>`+(mode==='b'?`<li>Правок включено: ${P.edits}</li><li>Сроки согласуем после брифа</li><li>Печать тиража полиграфии считается отдельно</li>`:'');
+ const u=tg?.initDataUnsafe?.user;if(u&&!$('ct2').value)$('ct2').value=u.username?'@'+u.username:'';if(u&&!$('n').value)$('n').value=u.first_name||'';
+ show('s-order')};
+$('send').onclick=()=>{
+ if(!$('ct2').value.trim()){alert('Укажите контакт, чтобы мы могли ответить');$('ct2').focus();return}
+ const data={mode,name:$('n').value,company:$('co').value,contact:$('ct2').value,comment:$('cm').value,first:$('first').checked,ref:$('ref').checked?($('o-ref').value||'да'):'',lines:calc.lines.map(x=>[x.n,fmt(x.lo),fmt(x.hi)]),lo:fmt(calc.lo),hi:fmt(calc.hi)};
+ if(tg?.initData){tg.sendData(JSON.stringify(data))}
+ else{$('dump').textContent=JSON.stringify(data,null,1);show('s-done')}};
+</script></body></html>

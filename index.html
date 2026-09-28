@@ -148,6 +148,6 @@ $('go').onclick=()=>{if(!on.size){alert('Выберите, что вам нуж�
 $('send').onclick=()=>{
  if(!$('ct2').value.trim()){alert('Укажите контакт, чтобы мы могли ответить');$('ct2').focus();return}
  const data={mode,name:$('n').value,company:$('co').value,contact:$('ct2').value,comment:$('cm').value,first:$('first').checked,ref:$('ref').checked?($('o-ref').value||'да'):'',lines:calc.lines.map(x=>[x.n,fmt(x.lo),fmt(x.hi)]),lo:fmt(calc.lo),hi:fmt(calc.hi)};
- if(tg?.initData){tg.sendData(JSON.stringify(data))}
+ if(tg&&tg.platform&&tg.platform!=='unknown'){tg.sendData(JSON.stringify(data))}
  else{$('dump').textContent=JSON.stringify(data,null,1);show('s-done')}};
 </script></body></html>
